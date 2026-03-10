@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinNex — Wealth Wellness Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #050d1a; --card: #0a1628; --border: #0f2040; --surface: #0d1f35;
+    --teal: #00d4c8; --teal-dim: #00a89e; --gold: #f5c842;
+    --red: #ff4d6d; --green: #00e676; --purple: #9b59ff;
+    --text: #e8f4f8; --muted: #4a6580;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; font-size: 13px; overflow-x: hidden; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* SIDEBAR */
+  #sidebar { width: 220px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+  .logo-wrap { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo-name { font-weight: 900; font-size: 18px; letter-spacing: -0.5px; }
+  .logo-sub { font-size: 9px; color: var(--muted); letter-spacing: 2px; font-weight: 600; }
+  nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+  .nav-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; font-weight: 700; padding: 0 12px; margin-bottom: 8px; }
+  .nav-btn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-weight: 500; cursor: pointer; margin-bottom: 2px; text-align: left; font-size: 13px; font-family: inherit; transition: all 0.15s; }
+  .nav-btn:hover { background: var(--border); color: var(--teal); }
+  .nav-btn.active { background: rgba(0,212,200,0.12); color: var(--teal); font-weight: 700; }
+  .nav-dot { margin-left: auto; width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
+  .nav-icon { font-size: 16px; }
+  .user-wrap { padding: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,rgba(0,212,200,.27),rgba(155,89,255,.27)); border: 1.5px solid var(--teal); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: var(--teal); flex-shrink: 0; }
+  .user-name { font-size: 12px; font-weight: 700; }
+  .user-tier { font-size: 10px; color: var(--teal); }
+
+  /* MAIN */
+  #main { margin-left: 220px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; min-width: 0; }
+  #topbar { padding: 20px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--card); position: sticky; top: 0; z-index: 90; }
+  .page-title { font-size: 18px; font-weight: 800; }
+  .page-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .live-badge { display: flex; align-items: center; gap: 8px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .live-text { font-size: 11px; color: var(--green); font-weight: 600; }
+
+  .page { display: none; padding: 28px 32px; overflow-x: hidden; }
+  .page.active { display: block; }
+  .page-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color 0.2s, transform 0.2s; }
+  .card:hover { border-color: rgba(0,212,200,.3); transform: translateY(-1px); }
+  .card-title { font-size: 11px; color: var(--muted); letter-spacing: 2px; font-weight: 700; margin-bottom: 4px; }
+
+  /* GRID UTILS */
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .col-300 { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+  .col-320 { display: grid; grid-template-columns: 320px 1fr; gap: 24px; }
+
+  /* KPI CARD */
+  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; transition: all 0.2s; }
+  .kpi-card:hover { border-color: rgba(0,212,200,.3); transform: translateY(-1px); }
+  .kpi-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+  .kpi-value { font-size: 20px; font-weight: 900; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+  .kpi-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* SCORE RING */
+  .score-wrap { display: flex; flex-direction: column; align-items: center; }
+  .score-ring-container { position: relative; }
+  .score-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .score-num { font-size: 38px; font-weight: 900; font-family: 'DM Mono', monospace; line-height: 1; }
+  .score-lbl { font-size: 9px; letter-spacing: 3px; color: var(--muted); margin-top: 4px; font-weight: 700; }
+
+  /* METRIC BARS (sidebar) */
+  .mini-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .mini-bar-label { width: 82px; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+  .mini-bar-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .mini-bar-fill { height: 100%; border-radius: 2px; }
+  .mini-bar-val { width: 24px; font-size: 10px; font-family: 'DM Mono', monospace; text-align: right; flex-shrink: 0; }
+
+  /* ASSET BADGE */
+  .asset-badge { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border-radius: 10px; margin-bottom: 8px; }
+  .asset-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .asset-name { font-size: 12px; font-weight: 600; }
+  .asset-val { font-size: 10px; color: var(--muted); }
+  .asset-pct { font-size: 13px; font-weight: 800; font-family: 'DM Mono', monospace; margin-left: auto; flex-shrink: 0; }
+
+  /* BUTTONS */
+  .btn-primary { background: linear-gradient(135deg, var(--teal), var(--teal-dim)); color: #050d1a; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 11px; letter-spacing: 0.5px; transition: all 0.2s; font-family: inherit; }
+  .btn-primary:hover { opacity: 0.85; transform: scale(1.02); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 7px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 11px; transition: all 0.2s; font-family: inherit; }
+  .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+  .btn-reset { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 7px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 11px; font-family: inherit; transition: all 0.2s; width: 100%; margin-top: 4px; }
+  .btn-reset:hover { border-color: var(--teal); color: var(--teal); }
+
+  /* REC CARDS */
+  .rec-card { border-radius: 14px; padding: 20px 24px; display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; transition: all 0.2s; }
+  .rec-icon { font-size: 24px; flex-shrink: 0; }
+  .rec-title { font-size: 14px; font-weight: 800; margin-bottom: 6px; }
+  .rec-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* WALLET */
+  .wallet-section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+  .wallet-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .wallet-icon { font-size: 20px; }
+  .wallet-cat { font-size: 13px; font-weight: 800; }
+  .wallet-total { margin-left: auto; font-size: 14px; font-weight: 900; font-family: 'DM Mono', monospace; }
+  .wallet-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface); border-radius: 8px; margin-bottom: 6px; }
+  .wallet-item-name { font-size: 12px; font-weight: 600; }
+  .wallet-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 2px; }
+  .wallet-item-val { font-size: 13px; font-weight: 800; font-family: 'DM Mono', monospace; }
+
+  /* METRICS PAGE */
+  .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; transition: all 0.2s; }
+  .metric-card:hover { border-color: rgba(0,212,200,.3); transform: translateY(-1px); }
+  .metric-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .metric-title { font-size: 13px; font-weight: 800; margin-bottom: 2px; }
+  .metric-target { font-size: 10px; color: var(--muted); }
+  .metric-actual { font-size: 22px; font-weight: 900; font-family: 'DM Mono', monospace; }
+  .bar-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .metric-insight { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+  /* SIMULATOR */
+  .sim-btn { border: 1px solid var(--border); background: var(--surface); color: var(--muted); padding: 12px 14px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; text-align: left; font-family: inherit; width: 100%; margin-bottom: 10px; }
+  .sim-btn:hover { border-color: var(--teal); color: var(--text); }
+  .sim-btn.active { border-color: var(--teal); color: var(--teal); background: rgba(0,212,200,.07); }
+  .sim-label { font-weight: 700; margin-bottom: 4px; }
+  .sim-impact { font-size: 11px; font-family: 'DM Mono', monospace; }
+  .impact-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface); border-radius: 8px; margin-bottom: 6px; }
+  .impact-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .impact-name { flex: 1; font-size: 12px; }
+  .impact-orig { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+  .impact-new { font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  /* CHART CONTAINERS */
+  .chart-box { position: relative; width: 100%; }
+  canvas { display: block; max-width: 100%; }
+
+  /* EDUCATIONAL */
+  .edu-card { background: var(--surface); border-radius: 10px; padding: 16px; }
+  .edu-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; font-weight: 700; }
+  .edu-title { font-size: 12px; font-weight: 800; margin-bottom: 6px; }
+  .edu-body { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+  /* EMPTY STATE */
+  .empty-state { background: var(--surface); border: 1px dashed var(--border); border-radius: 14px; padding: 60px 40px; text-align: center; }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-title { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+  .empty-desc { font-size: 12px; color: var(--muted); }
+
+  /* FLEX UTILS */
+  .flex { display: flex; } .flex-col { flex-direction: column; } .items-center { align-items: center; } .justify-between { justify-content: space-between; }
+  .gap-8 { gap: 8px; } .gap-10 { gap: 10px; } .gap-16 { gap: 16px; } .gap-20 { gap: 20px; }
+  .mb-4 { margin-bottom: 4px; } .mb-8 { margin-bottom: 8px; } .mb-16 { margin-bottom: 16px; } .mb-20 { margin-bottom: 20px; } .mb-24 { margin-bottom: 24px; }
+  .mt-4 { margin-top: 4px; } .mt-16 { margin-top: 16px; } .mt-20 { margin-top: 20px; } .mt-24 { margin-top: 24px; }
+  .ml-auto { margin-left: auto; }
+  .mono { font-family: 'DM Mono', monospace; }
+  .bold { font-weight: 700; } .bolder { font-weight: 800; } .boldest { font-weight: 900; }
+  .text-teal { color: var(--teal); } .text-green { color: var(--green); } .text-gold { color: var(--gold); } .text-red { color: var(--red); } .text-purple { color: var(--purple); } .text-muted { color: var(--muted); }
+  .text-10 { font-size: 10px; } .text-11 { font-size: 11px; } .text-12 { font-size: 12px; } .text-13 { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-icon">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="diaGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00D4C8"/>
+            <stop offset="50%" stop-color="#00C89A"/>
+            <stop offset="100%" stop-color="#22E055"/>
+          </linearGradient>
+          <linearGradient id="diaInner" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00B8A0"/>
+            <stop offset="100%" stop-color="#009966"/>
+          </linearGradient>
+          <linearGradient id="diaFace" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00E8D0" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#00A880" stop-opacity="0.6"/>
+          </linearGradient>
+        </defs>
+        <!-- Outer diamond -->
+        <polygon points="20,2 38,20 20,38 2,20" fill="url(#diaGrad)"/>
+        <!-- Inner diamond outline -->
+        <polygon points="20,8 34,20 20,32 6,20" fill="url(#diaFace)" opacity="0.25"/>
+        <polygon points="20,8 34,20 20,32 6,20" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+        <!-- Inner chevron/arrow pointing down -->
+        <polyline points="13,16 20,24 27,16" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Small top diamond facet highlight -->
+        <polygon points="20,2 38,20 20,14 2,20" fill="white" opacity="0.12"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-name">FinNex</div>
+      <div class="logo-sub">WEALTH WELLNESS</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-label">NAVIGATION</div>
+    <button class="nav-btn active" data-page="overview"><span class="nav-icon">⬡</span> Overview <span class="nav-dot" style="display:none"></span></button>
+    <button class="nav-btn" data-page="wallet"><span class="nav-icon">◈</span> Wealth Wallet</button>
+    <button class="nav-btn" data-page="metrics"><span class="nav-icon">◉</span> Wellness Metrics</button>
+    <button class="nav-btn" data-page="recommendations"><span class="nav-icon">✦</span> Recommendations</button>
+    <button class="nav-btn" data-page="simulator"><span class="nav-icon">◎</span> Scenario Sim</button>
+  </nav>
+  <div class="user-wrap">
+    <div class="avatar">AC</div>
+    <div>
+      <div class="user-name">Alex Chen</div>
+      <div class="user-tier">Premium Member</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div>
+      <div class="page-title" id="topbar-title">Overview</div>
+      <div class="page-sub">Last updated: Mar 10, 2026, 3:42 PM SGT</div>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span class="live-text">All systems live</span>
+    </div>
+  </div>
+
+  <!-- ======================== OVERVIEW PAGE ======================== -->
+  <div class="page active" id="page-overview">
+    <div class="page-desc">Good afternoon, Alex. Here's your financial health snapshot.</div>
+
+    <!-- KPIs -->
+    <div class="grid-4">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Wealth</div>
+        <div class="kpi-value text-teal" id="kpi-wealth">SGD 284,750</div>
+        <div class="kpi-sub">+4.3% this month</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Monthly Income</div>
+        <div class="kpi-value text-green">SGD 12,500</div>
+        <div class="kpi-sub">Net after tax</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Debt</div>
+        <div class="kpi-value text-gold">SGD 54,000</div>
+        <div class="kpi-sub">36% DTI ratio</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Liquid Assets</div>
+        <div class="kpi-value text-purple">SGD 42,000</div>
+        <div class="kpi-sub">5.4 months cover</div>
+      </div>
+    </div>
+
+    <!-- Score + Net Worth -->
+    <div class="col-300 mb-20">
+      <!-- Score card -->
+      <div class="card">
+        <div class="card-title mb-20">FINANCIAL HEALTH SCORE</div>
+        <div class="score-wrap">
+          <div class="score-ring-container">
+            <svg id="score-svg" width="160" height="160" style="transform:rotate(-90deg)">
+              <circle cx="80" cy="80" r="66" fill="none" stroke="#0f2040" stroke-width="10"/>
+              <circle id="score-arc" cx="80" cy="80" r="66" fill="none" stroke="#00e676" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 414.69" style="transition:stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1),stroke 0.5s"/>
+            </svg>
+            <div class="score-overlay">
+              <span class="score-num text-green" id="score-num">0</span>
+              <span class="score-lbl" id="score-lbl">HEALTHY</span>
+            </div>
+          </div>
+          <div style="margin-top:20px;width:100%">
+            <div class="mini-bar-row"><span class="mini-bar-label">Debt Mgmt</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:78%;background:var(--green)"></div></div><span class="mini-bar-val text-green">78</span></div>
+            <div class="mini-bar-row"><span class="mini-bar-label">Savings</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:64%;background:var(--gold)"></div></div><span class="mini-bar-val text-gold">64</span></div>
+            <div class="mini-bar-row"><span class="mini-bar-label">Diversif.</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:71%;background:var(--teal)"></div></div><span class="mini-bar-val text-teal">71</span></div>
+            <div class="mini-bar-row"><span class="mini-bar-label">Liquidity</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:90%;background:var(--green)"></div></div><span class="mini-bar-val text-green">90</span></div>
+            <div class="mini-bar-row"><span class="mini-bar-label">Growth</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:62%;background:var(--gold)"></div></div><span class="mini-bar-val text-gold">62</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Net Worth Chart -->
+      <div class="card" style="min-width:0;overflow:hidden">
+        <div class="card-title">NET WORTH TRAJECTORY</div>
+        <div class="kpi-value text-teal mb-20" id="overview-wealth">SGD 284,750</div>
+        <div style="position:relative;height:180px;width:100%">
+          <canvas id="netWorthChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Portfolio -->
+    <div class="card" style="overflow:hidden">
+      <div class="card-title mb-20">PORTFOLIO OVERVIEW</div>
+      <div style="display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center;min-width:0">
+        <div style="position:relative;width:200px;height:200px;flex-shrink:0">
+          <canvas id="donutChart"></canvas>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="asset-badge"><div class="asset-dot" style="background:#00d4c8;box-shadow:0 0 8px #00d4c8"></div><div><div class="asset-name">Equities</div><div class="asset-val">SGD 98,000</div></div><div class="asset-pct text-teal">34.4%</div></div>
+          <div class="asset-badge"><div class="asset-dot" style="background:#9b59ff;box-shadow:0 0 8px #9b59ff"></div><div><div class="asset-name">Bonds</div><div class="asset-val">SGD 52,000</div></div><div class="asset-pct text-purple">18.3%</div></div>
+          <div class="asset-badge"><div class="asset-dot" style="background:#f5c842;box-shadow:0 0 8px #f5c842"></div><div><div class="asset-name">Real Estate</div><div class="asset-val">SGD 75,000</div></div><div class="asset-pct text-gold">26.3%</div></div>
+          <div class="asset-badge"><div class="asset-dot" style="background:#ff6b9d;box-shadow:0 0 8px #ff6b9d"></div><div><div class="asset-name">Digital Assets</div><div class="asset-val">SGD 28,750</div></div><div class="asset-pct" style="color:#ff6b9d">10.1%</div></div>
+          <div class="asset-badge"><div class="asset-dot" style="background:#00e676;box-shadow:0 0 8px #00e676"></div><div><div class="asset-name">Cash & Deposits</div><div class="asset-val">SGD 31,000</div></div><div class="asset-pct text-green">10.9%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== WALLET PAGE ======================== -->
+  <div class="page" id="page-wallet">
+    <div class="page-desc">Your complete financial picture — unified in one secure Wealth Wallet.</div>
+    <div class="grid-2">
+      <!-- Traditional -->
+      <div class="wallet-section">
+        <div class="wallet-header">
+          <span class="wallet-icon">🏦</span>
+          <span class="wallet-cat">Traditional Assets</span>
+          <span class="wallet-total text-green">SGD 97,500</span>
+        </div>
+        <div class="wallet-item"><div><div class="wallet-item-name">DBS Savings Account</div><span class="wallet-tag" style="background:rgba(0,230,118,.15);color:var(--green)">Cash</span></div><div class="wallet-item-val">SGD 18,500</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">OCBC Fixed Deposit</div><span class="wallet-tag" style="background:rgba(0,230,118,.15);color:var(--green)">Cash</span></div><div class="wallet-item-val">SGD 12,500</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">CPF Ordinary Account</div><span class="wallet-tag" style="background:rgba(0,230,118,.15);color:var(--green)">Retirement</span></div><div class="wallet-item-val">SGD 45,000</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">CPF Special Account</div><span class="wallet-tag" style="background:rgba(0,230,118,.15);color:var(--green)">Retirement</span></div><div class="wallet-item-val">SGD 22,000</div></div>
+      </div>
+      <!-- Investment -->
+      <div class="wallet-section">
+        <div class="wallet-header">
+          <span class="wallet-icon">📊</span>
+          <span class="wallet-cat">Investment Portfolio</span>
+          <span class="wallet-total text-teal">SGD 125,000</span>
+        </div>
+        <div class="wallet-item"><div><div class="wallet-item-name">STI ETF (ES3)</div><span class="wallet-tag" style="background:rgba(0,212,200,.15);color:var(--teal)">Equities</span></div><div class="wallet-item-val">SGD 32,000</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">S&P 500 ETF (VOO)</div><span class="wallet-tag" style="background:rgba(0,212,200,.15);color:var(--teal)">Equities</span></div><div class="wallet-item-val">SGD 41,000</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">SG Government Bonds</div><span class="wallet-tag" style="background:rgba(0,212,200,.15);color:var(--teal)">Bonds</span></div><div class="wallet-item-val">SGD 28,000</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">Schroders Unit Trust</div><span class="wallet-tag" style="background:rgba(0,212,200,.15);color:var(--teal)">Funds</span></div><div class="wallet-item-val">SGD 24,000</div></div>
+      </div>
+      <!-- Private -->
+      <div class="wallet-section">
+        <div class="wallet-header">
+          <span class="wallet-icon">🏠</span>
+          <span class="wallet-cat">Private Holdings</span>
+          <span class="wallet-total text-gold">SGD 83,000</span>
+        </div>
+        <div class="wallet-item"><div><div class="wallet-item-name">HDB Flat (Est. Value)</div><span class="wallet-tag" style="background:rgba(245,200,66,.15);color:var(--gold)">Real Estate</span></div><div class="wallet-item-val">SGD 65,000</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">REITs Portfolio</div><span class="wallet-tag" style="background:rgba(245,200,66,.15);color:var(--gold)">Real Estate</span></div><div class="wallet-item-val">SGD 10,000</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">Angel Investment</div><span class="wallet-tag" style="background:rgba(245,200,66,.15);color:var(--gold)">Private Equity</span></div><div class="wallet-item-val">SGD 8,000</div></div>
+      </div>
+      <!-- Digital -->
+      <div class="wallet-section">
+        <div class="wallet-header">
+          <span class="wallet-icon">₿</span>
+          <span class="wallet-cat">Digital Assets</span>
+          <span class="wallet-total" style="color:#ff6b9d">SGD 28,750</span>
+        </div>
+        <div class="wallet-item"><div><div class="wallet-item-name">Bitcoin (BTC)</div><span class="wallet-tag" style="background:rgba(255,107,157,.15);color:#ff6b9d">Crypto</span></div><div class="wallet-item-val">SGD 15,200</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">Ethereum (ETH)</div><span class="wallet-tag" style="background:rgba(255,107,157,.15);color:#ff6b9d">Crypto</span></div><div class="wallet-item-val">SGD 8,300</div></div>
+        <div class="wallet-item"><div><div class="wallet-item-name">Tokenised T-Bills</div><span class="wallet-tag" style="background:rgba(255,107,157,.15);color:#ff6b9d">Digital Bond</span></div><div class="wallet-item-val">SGD 5,250</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== METRICS PAGE ======================== -->
+  <div class="page" id="page-metrics">
+    <div class="page-desc">Five core metrics that define your financial wellness score.</div>
+    <div class="grid-2">
+      <div>
+        <!-- DTI -->
+        <div class="metric-card">
+          <div class="metric-top"><div><div class="metric-title">Debt-to-Income Ratio</div><div class="metric-target">Target: &lt; 36%</div></div><div class="metric-actual text-gold">36%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:72%;background:linear-gradient(90deg,rgba(245,200,66,.5),var(--gold))"></div></div>
+          <div class="metric-insight">💡 Your DTI is exactly at the threshold. Paying down SGD 5,000 in debt would bring you to a healthier 32%.</div>
+        </div>
+        <!-- Savings Rate -->
+        <div class="metric-card">
+          <div class="metric-top"><div><div class="metric-title">Savings Rate</div><div class="metric-target">Target: &gt; 20%</div></div><div class="metric-actual text-green">25.6%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:64%;background:linear-gradient(90deg,rgba(0,230,118,.5),var(--green))"></div></div>
+          <div class="metric-insight">💡 You're saving SGD 3,200/month. Increasing by SGD 550/month reaches the optimal 30% rate.</div>
+        </div>
+        <!-- Diversification -->
+        <div class="metric-card">
+          <div class="metric-top"><div><div class="metric-title">Portfolio Diversification</div><div class="metric-target">Target: 4+ asset classes</div></div><div class="metric-actual text-teal">5 classes</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:71%;background:linear-gradient(90deg,rgba(0,212,200,.5),var(--teal))"></div></div>
+          <div class="metric-insight">💡 Good spread across 5 asset classes. Consider adding commodities (gold) to further reduce correlation risk.</div>
+        </div>
+        <!-- Liquidity -->
+        <div class="metric-card">
+          <div class="metric-top"><div><div class="metric-title">Liquidity Ratio</div><div class="metric-target">Target: &gt; 3 months</div></div><div class="metric-actual text-green">5.4 months</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,rgba(0,230,118,.5),var(--green))"></div></div>
+          <div class="metric-insight">💡 Excellent. Your liquid assets comfortably cover over 5 months of expenses. You're well protected.</div>
+        </div>
+        <!-- Net Worth Growth -->
+        <div class="metric-card">
+          <div class="metric-top"><div><div class="metric-title">Net Worth Growth (MoM)</div><div class="metric-target">Target: &gt; 2% MoM</div></div><div class="metric-actual text-teal">+4.3%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:62%;background:linear-gradient(90deg,rgba(0,212,200,.5),var(--teal))"></div></div>
+          <div class="metric-insight">💡 Solid growth this month driven by equity market gains. Maintain current contribution levels.</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card" style="padding:24px;min-width:0;overflow:hidden">
+          <div class="card-title mb-16">WELLNESS RADAR</div>
+          <div style="position:relative;height:260px;width:100%">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+        <!-- Savings Bar -->
+        <div class="card" style="padding:24px;min-width:0;overflow:hidden">
+          <div class="card-title mb-16">MONTHLY SAVINGS TREND</div>
+          <div style="position:relative;height:160px;width:100%">
+            <canvas id="savingsChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== RECOMMENDATIONS PAGE ======================== -->
+  <div class="page" id="page-recommendations">
+    <div class="page-desc">Personalized, data-driven actions to improve your financial wellness.</div>
+
+    <div class="rec-card" style="background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.2)">
+      <span class="rec-icon">✅</span>
+      <div style="flex:1"><div class="rec-title">Excellent Liquidity Position</div><div class="rec-desc">Your liquidity ratio covers 5.4 months of expenses — well above the 3-month minimum. You're well protected against sudden financial shocks.</div></div>
+      <button class="btn-ghost">View Details</button>
+    </div>
+    <div class="rec-card" style="background:rgba(245,200,66,.05);border:1px solid rgba(245,200,66,.2)">
+      <span class="rec-icon">⚠️</span>
+      <div style="flex:1"><div class="rec-title">Portfolio Concentration Risk</div><div class="rec-desc">Your equities allocation (34%) slightly exceeds the recommended 30%. Consider rebalancing into bonds or REITs to reduce concentration risk.</div></div>
+      <button class="btn-ghost">Rebalance Now</button>
+    </div>
+    <div class="rec-card" style="background:rgba(0,212,200,.05);border:1px solid rgba(0,212,200,.2)">
+      <span class="rec-icon">💡</span>
+      <div style="flex:1"><div class="rec-title">Boost Your Savings Rate</div><div class="rec-desc">You're at 25.6% — just 4.4% away from the optimal 30% savings rate. Try automating an extra SGD 550/month transfer to your investment account.</div></div>
+      <button class="btn-ghost">Set Up Auto-Save</button>
+    </div>
+    <div class="rec-card" style="background:rgba(245,200,66,.05);border:1px solid rgba(245,200,66,.2)">
+      <span class="rec-icon">📈</span>
+      <div style="flex:1"><div class="rec-title">Digital Asset Exposure</div><div class="rec-desc">Crypto holdings (10.1%) are near the recommended upper limit. Monitor volatility and consider partial profit-taking during market highs.</div></div>
+      <button class="btn-ghost">Stress Test</button>
+    </div>
+
+    <!-- Educational -->
+    <div class="card" style="margin-top:8px;padding:24px">
+      <div class="card-title mb-16">📚 EDUCATIONAL INSIGHTS</div>
+      <div class="grid-3">
+        <div class="edu-card"><span class="edu-tag" style="background:rgba(0,212,200,.15);color:var(--teal)">Debt</span><div class="edu-title">What is a healthy DTI?</div><div class="edu-body">A debt-to-income ratio below 36% means your finances are manageable. Above 43% signals stress. Target: keep monthly debt payments under SGD 4,500.</div></div>
+        <div class="edu-card"><span class="edu-tag" style="background:rgba(0,212,200,.15);color:var(--teal)">Investing</span><div class="edu-title">Why diversify assets?</div><div class="edu-body">Different assets react differently to market events. A well-diversified portfolio reduces risk without sacrificing long-term returns. Aim for 5+ asset classes.</div></div>
+        <div class="edu-card"><span class="edu-tag" style="background:rgba(0,212,200,.15);color:var(--teal)">Liquidity</span><div class="edu-title">The liquidity buffer rule</div><div class="edu-body">Always maintain 3–6 months of living expenses in liquid assets. This protects you from emergency job loss or unexpected expenses without selling investments.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== SIMULATOR PAGE ======================== -->
+  <div class="page" id="page-simulator">
+    <div class="page-desc">Stress-test your financial health against real-world scenarios.</div>
+    <div class="col-320">
+      <!-- Left panel -->
+      <div>
+        <div class="card-title mb-12">SELECT SCENARIO</div>
+        <button class="sim-btn" data-scenario="marketCrash">
+          <div class="sim-label">Market Crash −30%</div>
+          <div class="sim-impact text-red">−SGD 58,650 impact</div>
+        </button>
+        <button class="sim-btn" data-scenario="jobLoss">
+          <div class="sim-label">Job Loss (3 months)</div>
+          <div class="sim-impact" style="color:#ff8c00">−SGD 37,500 impact</div>
+        </button>
+        <button class="sim-btn" data-scenario="salaryRaise">
+          <div class="sim-label">Salary Increase +20%</div>
+          <div class="sim-impact text-green">+SGD 42,000 impact</div>
+        </button>
+        <button class="sim-btn" data-scenario="cryptoCrash">
+          <div class="sim-label">Crypto Crash −80%</div>
+          <div class="sim-impact" style="color:#ff6b9d">−SGD 23,000 impact</div>
+        </button>
+        <button class="btn-reset" id="sim-reset" style="display:none">↩ Reset to Current</button>
+
+        <div class="card mt-24" style="padding:20px">
+          <div class="card-title mb-16">HEALTH SCORE</div>
+          <div style="display:flex;justify-content:center;margin-bottom:12px">
+            <div class="score-ring-container">
+              <svg id="sim-score-svg" width="140" height="140" style="transform:rotate(-90deg)">
+                <circle cx="70" cy="70" r="56" fill="none" stroke="#0f2040" stroke-width="10"/>
+                <circle id="sim-score-arc" cx="70" cy="70" r="56" fill="none" stroke="#00e676" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 351.86" style="transition:stroke-dasharray 0.8s ease,stroke 0.4s"/>
+              </svg>
+              <div class="score-overlay">
+                <span class="score-num" id="sim-score-num" style="font-size:32px;color:var(--green)">72</span>
+                <span class="score-lbl" id="sim-score-lbl">HEALTHY</span>
+              </div>
+            </div>
+          </div>
+          <div id="sim-score-compare" style="display:none;text-align:center">
+            <div class="text-11 text-muted">vs current score of</div>
+            <div class="mono boldest text-muted" style="font-size:20px;text-decoration:line-through">72</div>
+            <div id="sim-score-diff" class="text-12 bold mt-4"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <!-- Impact chart -->
+        <div class="card" style="padding:24px;min-width:0;overflow:hidden">
+          <div class="card-title mb-16">PORTFOLIO IMPACT</div>
+          <div style="display:flex;gap:20px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+            <div><div class="text-10 text-muted mb-4">CURRENT WEALTH</div><div class="kpi-value text-teal">SGD 284,750</div></div>
+            <div id="sim-arrow" style="font-size:28px;color:var(--muted);display:none">→</div>
+            <div id="sim-projected" style="display:none"><div class="text-10 text-muted mb-4">PROJECTED WEALTH</div><div class="kpi-value" id="sim-wealth-val">SGD 284,750</div></div>
+            <div id="sim-impact-wrap" style="margin-left:auto;text-align:right;display:none"><div class="text-10 text-muted mb-4">IMPACT</div><div class="boldest mono" id="sim-impact-val" style="font-size:18px"></div></div>
+          </div>
+          <div style="position:relative;height:160px;width:100%">
+            <canvas id="simChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Asset breakdown -->
+        <div class="card" id="sim-breakdown" style="padding:24px;display:none">
+          <div class="card-title mb-16">ASSET-LEVEL IMPACT</div>
+          <div id="sim-asset-rows"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="sim-empty">
+          <div class="empty-icon">◎</div>
+          <div class="empty-title">Select a scenario to simulate</div>
+          <div class="empty-desc">Choose a scenario from the left to see how it affects your financial health score and portfolio value.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- DATA ----
+const DATA = {
+  healthScore: 72,
+  totalWealth: 284750,
+  netWorth: [231000,244000,238000,251000,267000,273000,284750],
+  netWorthLabels: ["Sep","Oct","Nov","Dec","Jan","Feb","Mar"],
+  assets: [
+    { name:"Equities", value:98000, color:"#00d4c8", pct:34.4 },
+    { name:"Bonds", value:52000, color:"#9b59ff", pct:18.3 },
+    { name:"Real Estate", value:75000, color:"#f5c842", pct:26.3 },
+    { name:"Digital Assets", value:28750, color:"#ff6b9d", pct:10.1 },
+    { name:"Cash & Deposits", value:31000, color:"#00e676", pct:10.9 },
+  ],
+  scenarios: {
+    marketCrash: { label:"Market Crash −30%", impact:-58650, newScore:58, color:"#ff4d6d" },
+    jobLoss:     { label:"Job Loss (3 months)", impact:-37500, newScore:51, color:"#ff8c00" },
+    salaryRaise: { label:"Salary Increase +20%", impact:42000, newScore:84, color:"#00e676" },
+    cryptoCrash: { label:"Crypto Crash −80%", impact:-23000, newScore:65, color:"#ff6b9d" },
+  },
+  assetImpacts: {
+    marketCrash: { "Equities":-0.30, "Bonds":0.05, "Real Estate":-0.05, "Digital Assets":-0.25, "Cash & Deposits":0 },
+    jobLoss:     { "Equities":0, "Bonds":0, "Real Estate":0, "Digital Assets":0, "Cash & Deposits":-0.2 },
+    salaryRaise: { "Equities":0, "Bonds":0, "Real Estate":0, "Digital Assets":0, "Cash & Deposits":0 },
+    cryptoCrash: { "Equities":0, "Bonds":0, "Real Estate":0, "Digital Assets":-0.80, "Cash & Deposits":0 },
+  }
+};
+
+// ---- NAVIGATION ----
+const NAV_TITLES = { overview:"Overview", wallet:"Wealth Wallet", metrics:"Wellness Metrics", recommendations:"Recommendations", simulator:"Scenario Sim" };
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active'); b.querySelector('.nav-dot') && (b.querySelector('.nav-dot').style.display='none'); });
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    if(btn.querySelector('.nav-dot')) btn.querySelector('.nav-dot').style.display='';
+    const pg = btn.dataset.page;
+    document.getElementById('page-'+pg).classList.add('active');
+    document.getElementById('topbar-title').textContent = NAV_TITLES[pg];
+    if(pg==='metrics') setTimeout(initMetricCharts,50);
+    if(pg==='simulator') setTimeout(initSimChart,50);
+  });
+});
+
+// ---- SCORE RING ----
+function setScoreRing(svgId, arcId, numId, lblId, score, r=66, circ=414.69) {
+  const color = score>=70 ? '#00e676' : score>=50 ? '#f5c842' : '#ff4d6d';
+  const lbl = score>=70 ? 'HEALTHY' : score>=50 ? 'FAIR' : 'AT RISK';
+  const arc = document.getElementById(arcId);
+  const num = document.getElementById(numId);
+  const l = document.getElementById(lblId);
+  arc.style.stroke = color;
+  arc.setAttribute('stroke-dasharray', `${(score/100)*circ} ${circ}`);
+  num.style.color = color;
+  if(l) { l.textContent = lbl; }
+  return { color, lbl };
+}
+
+// Animate score on load
+let animVal = 0;
+const animTimer = setInterval(()=>{
+  animVal = Math.min(animVal+2, DATA.healthScore);
+  document.getElementById('score-num').textContent = animVal;
+  setScoreRing('score-svg','score-arc','score-num','score-lbl',animVal);
+  if(animVal>=DATA.healthScore) clearInterval(animTimer);
+},18);
+setScoreRing('sim-score-svg','sim-score-arc','sim-score-num','sim-score-lbl',72,56,351.86);
+document.getElementById('sim-score-num').textContent='72';
+
+// ---- CHART DEFAULTS ----
+const defaultFont = { family:"'DM Sans', sans-serif", size:11 };
+Chart.defaults.color = '#4a6580';
+Chart.defaults.font = defaultFont;
+
+// ---- NET WORTH CHART ----
+const netCtx = document.getElementById('netWorthChart').getContext('2d');
+const grad = netCtx.createLinearGradient(0,0,0,180);
+grad.addColorStop(0,'rgba(0,212,200,0.3)');
+grad.addColorStop(1,'rgba(0,212,200,0)');
+new Chart(netCtx,{
+  type:'line',
+  data:{
+    labels: DATA.netWorthLabels,
+    datasets:[{ data: DATA.netWorth, borderColor:'#00d4c8', borderWidth:2.5, pointBackgroundColor:'#00d4c8', pointRadius:4, fill:true, backgroundColor:grad, tension:0.4 }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>`SGD ${ctx.raw.toLocaleString()}` }, backgroundColor:'#0a1628', borderColor:'#0f2040', borderWidth:1, titleFont:{family:"'DM Sans',sans-serif"}, bodyFont:{family:"'DM Mono',monospace"} } },
+    scales:{ x:{ grid:{color:'#0f2040'} }, y:{ grid:{color:'#0f2040'}, ticks:{ callback: v=>`${(v/1000).toFixed(0)}k` } } }
+  }
+});
+
+// ---- DONUT CHART ----
+const doCtx = document.getElementById('donutChart').getContext('2d');
+new Chart(doCtx,{
+  type:'doughnut',
+  data:{
+    labels: DATA.assets.map(a=>a.name),
+    datasets:[{ data: DATA.assets.map(a=>a.value), backgroundColor: DATA.assets.map(a=>a.color), borderWidth:0, hoverOffset:6 }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'60%',
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>`SGD ${ctx.raw.toLocaleString()} (${DATA.assets[ctx.dataIndex].pct}%)` }, backgroundColor:'#0a1628', borderColor:'#0f2040', borderWidth:1 } }
+  }
+});
+
+// ---- METRICS CHARTS (lazy) ----
+let metricsInited = false;
+function initMetricCharts(){
+  if(metricsInited) return; metricsInited=true;
+  // Radar
+  const rCtx = document.getElementById('radarChart').getContext('2d');
+  new Chart(rCtx,{
+    type:'radar',
+    data:{
+      labels:['Debt Mgmt','Savings','Diversif.','Liquidity','Growth'],
+      datasets:[{ data:[78,64,71,90,62], borderColor:'#00d4c8', backgroundColor:'rgba(0,212,200,0.15)', borderWidth:2, pointBackgroundColor:'#00d4c8', pointRadius:4 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#0a1628', borderColor:'#0f2040', borderWidth:1 } },
+      scales:{ r:{ grid:{color:'#0f2040'}, angleLines:{color:'#0f2040'}, ticks:{backdropColor:'transparent',color:'#4a6580',stepSize:20}, pointLabels:{color:'#4a6580',font:{size:11}} } }
+    }
+  });
+  // Savings bar
+  const sCtx = document.getElementById('savingsChart').getContext('2d');
+  new Chart(sCtx,{
+    type:'bar',
+    data:{
+      labels:['Oct','Nov','Dec','Jan','Feb','Mar'],
+      datasets:[{ data:[2400,2100,2800,2950,3050,3200], backgroundColor:'rgba(0,212,200,0.75)', borderRadius:4, borderSkipped:false }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>`SGD ${ctx.raw.toLocaleString()}` }, backgroundColor:'#0a1628', borderColor:'#0f2040', borderWidth:1 } },
+      scales:{ x:{grid:{color:'#0f2040'}}, y:{grid:{color:'#0f2040'}, ticks:{ callback: v=>`${(v/1000).toFixed(1)}k` } } }
+    }
+  });
+}
+
+// ---- SIMULATOR ----
+let simChartInst = null;
+let currentScenario = null;
+
+function initSimChart(){
+  if(simChartInst) return;
+  const sCtx = document.getElementById('simChart').getContext('2d');
+  const g = sCtx.createLinearGradient(0,0,0,160);
+  g.addColorStop(0,'rgba(0,212,200,0.25)');
+  g.addColorStop(1,'rgba(0,212,200,0)');
+  simChartInst = new Chart(sCtx,{
+    type:'line',
+    data:{
+      labels: DATA.netWorthLabels,
+      datasets:[{ data: DATA.netWorth, borderColor:'#00d4c8', borderWidth:2.5, fill:true, backgroundColor:g, tension:0.4, pointRadius:4, pointBackgroundColor:'#00d4c8' }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>`SGD ${ctx.raw.toLocaleString()}` }, backgroundColor:'#0a1628', borderColor:'#0f2040', borderWidth:1 } },
+      scales:{ x:{grid:{color:'#0f2040'}}, y:{grid:{color:'#0f2040'}, ticks:{ callback:v=>`${(v/1000).toFixed(0)}k` } } }
+    }
+  });
+}
+
+function applyScenario(key){
+  if(!simChartInst) initSimChart();
+  const s = DATA.scenarios[key];
+  const newWealth = DATA.totalWealth + s.impact;
+  const newLabels = [...DATA.netWorthLabels,'Proj.'];
+  const newData = [...DATA.netWorth, newWealth];
+  const col = s.impact<0 ? s.color : '#00e676';
+  const gCtx = document.getElementById('simChart').getContext('2d');
+  const g = gCtx.createLinearGradient(0,0,0,160);
+  g.addColorStop(0, col.replace('#','rgba(').replace(/([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i,(_,r,g2,b)=>`${parseInt(r,16)},${parseInt(g2,16)},${parseInt(b,16)}`)+',.25)');
+  g.addColorStop(1,col.replace('#','rgba(').replace(/([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i,(_,r,g2,b)=>`${parseInt(r,16)},${parseInt(g2,16)},${parseInt(b,16)}`)+',.0)');
+  simChartInst.data.labels = newLabels;
+  simChartInst.data.datasets[0].data = newData;
+  simChartInst.data.datasets[0].borderColor = col;
+  simChartInst.data.datasets[0].backgroundColor = g;
+  simChartInst.data.datasets[0].pointBackgroundColor = col;
+  simChartInst.update();
+
+  // Score
+  setScoreRing('sim-score-svg','sim-score-arc','sim-score-num','sim-score-lbl',s.newScore,56,351.86);
+  document.getElementById('sim-score-num').textContent = s.newScore;
+  document.getElementById('sim-score-compare').style.display='block';
+  const diff = s.newScore - DATA.healthScore;
+  const diffEl = document.getElementById('sim-score-diff');
+  diffEl.textContent = diff<0 ? `▼ ${Math.abs(diff)} pts lower` : `▲ ${diff} pts higher`;
+  diffEl.style.color = diff<0?'var(--red)':'var(--green)';
+
+  // KPIs
+  document.getElementById('sim-arrow').style.display='';
+  document.getElementById('sim-projected').style.display='';
+  document.getElementById('sim-impact-wrap').style.display='';
+  const wv = document.getElementById('sim-wealth-val');
+  wv.textContent = `SGD ${newWealth.toLocaleString()}`;
+  wv.style.color = s.impact<0?'var(--red)':'var(--green)';
+  const iv = document.getElementById('sim-impact-val');
+  iv.textContent = `${s.impact>0?'+':''}SGD ${s.impact.toLocaleString()}`;
+  iv.style.color = s.impact<0?'var(--red)':'var(--green)';
+
+  // Asset breakdown
+  const impacts = DATA.assetImpacts[key];
+  const rows = document.getElementById('sim-asset-rows');
+  rows.innerHTML = '';
+  DATA.assets.forEach(a=>{
+    const imp = impacts[a.name]||0;
+    const newVal = Math.round(a.value*(1+imp));
+    const row = document.createElement('div');
+    row.className='impact-row';
+    row.innerHTML=`
+      <div class="impact-dot" style="background:${a.color}"></div>
+      <span class="impact-name">${a.name}</span>
+      <span class="impact-orig" style="${imp!==0?'text-decoration:line-through':''};color:var(--muted)">SGD ${a.value.toLocaleString()}</span>
+      ${imp!==0?`<span class="impact-new" style="color:${imp<0?'var(--red)':'var(--green)'}">→ SGD ${newVal.toLocaleString()}</span>`:''}
+    `;
+    rows.appendChild(row);
+  });
+  document.getElementById('sim-breakdown').style.display='block';
+  document.getElementById('sim-empty').style.display='none';
+}
+
+function resetScenario(){
+  if(!simChartInst) return;
+  simChartInst.data.labels = DATA.netWorthLabels;
+  simChartInst.data.datasets[0].data = DATA.netWorth;
+  simChartInst.data.datasets[0].borderColor='#00d4c8';
+  simChartInst.data.datasets[0].pointBackgroundColor='#00d4c8';
+  simChartInst.update();
+  setScoreRing('sim-score-svg','sim-score-arc','sim-score-num','sim-score-lbl',DATA.healthScore,56,351.86);
+  document.getElementById('sim-score-num').textContent=DATA.healthScore;
+  document.getElementById('sim-score-compare').style.display='none';
+  document.getElementById('sim-arrow').style.display='none';
+  document.getElementById('sim-projected').style.display='none';
+  document.getElementById('sim-impact-wrap').style.display='none';
+  document.getElementById('sim-breakdown').style.display='none';
+  document.getElementById('sim-empty').style.display='';
+}
+
+document.querySelectorAll('.sim-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const key = btn.dataset.scenario;
+    if(currentScenario===key){
+      btn.classList.remove('active');
+      currentScenario=null;
+      resetScenario();
+      document.getElementById('sim-reset').style.display='none';
+    } else {
+      document.querySelectorAll('.sim-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentScenario=key;
+      applyScenario(key);
+      document.getElementById('sim-reset').style.display='';
+    }
+  });
+});
+document.getElementById('sim-reset').addEventListener('click',()=>{
+  document.querySelectorAll('.sim-btn').forEach(b=>b.classList.remove('active'));
+  currentScenario=null;
+  resetScenario();
+  document.getElementById('sim-reset').style.display='none';
+});
+</script>
+</body>
+</html>
